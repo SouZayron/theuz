@@ -164,6 +164,45 @@
     animation:pulse 3s ease-in-out infinite;
   }
 
+  /* Fumaça de sinalizador (torcida na arquibancada) */
+  .smoke{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+  .smoke i{
+    position:absolute;
+    left:var(--x);top:var(--y);
+    width:var(--s);height:var(--s);
+    margin:calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+    border-radius:50%;
+    background:radial-gradient(circle at 50% 50%,
+      rgba(255,70,90,.55) 0%, rgba(190,10,30,.38) 35%, rgba(90,0,12,.15) 60%, transparent 72%);
+    filter:blur(6px);
+    mix-blend-mode:screen;
+    opacity:0;
+    will-change:transform,opacity;
+    animation:smoke var(--d) ease-out infinite;
+    animation-delay:var(--t);
+  }
+  @keyframes smoke{
+    0%{transform:translate(0,0) scale(.45) rotate(0deg);opacity:0}
+    14%{opacity:.7}
+    55%{opacity:.35}
+    100%{transform:translate(var(--dx),var(--dy)) scale(2.7) rotate(var(--r));opacity:0}
+  }
+
+  /* Fumaça preta (50% de transparência) */
+  .smoke i.dark{
+    background:radial-gradient(circle at 50% 50%,
+      rgba(0,0,0,.95) 0%, rgba(0,0,0,.65) 35%, rgba(0,0,0,.25) 60%, transparent 72%);
+    mix-blend-mode:normal;
+    filter:blur(8px);
+    animation-name:smokeDark;
+  }
+  @keyframes smokeDark{
+    0%{transform:translate(0,0) scale(.45) rotate(0deg);opacity:0}
+    14%{opacity:.5}
+    55%{opacity:.3}
+    100%{transform:translate(var(--dx),var(--dy)) scale(2.7) rotate(var(--r));opacity:0}
+  }
+
   /* Partículas vermelhas */
   .sparks{position:fixed;inset:0;pointer-events:none;z-index:1}
   .sparks i{
@@ -204,6 +243,7 @@
   <div class="glow"></div>
   <div class="scan"></div>
   <div class="vignette"></div>
+  <div class="smoke" id="smoke" aria-hidden="true"></div>
   <div class="sparks" id="sparks" aria-hidden="true"></div>
 
   <main class="stage">
@@ -235,6 +275,63 @@
       sp.style.setProperty('--i', i);
       if(c !== ' ') sp.textContent = c;
       el.appendChild(sp);
+    });
+  })();
+
+  // Fumaça: vários pontos de emissão, como sinalizadores na arquibancada
+  (function(){
+    const box = document.getElementById('smoke');
+    const small = window.innerWidth < 600;
+    const per = small ? 3 : 5;
+    // [x%, y%, deriva horizontal (vw)] — cantos inferiores e laterais
+    const spots = [
+      [5,98,6],[24,102,-4],[50,104,3],[76,102,4],[95,98,-6],
+      [8,60,8],[92,64,-8]
+    ];
+    const spotsUsed = small ? spots.filter((_,i)=>i!==2 && i<5) : spots;
+    spotsUsed.forEach(([x,y,drift])=>{
+      for(let i=0;i<per;i++){
+        const p = document.createElement('i');
+        const size = (small?110:150) + Math.random()*(small?90:130);
+        p.style.setProperty('--x', (x + (Math.random()*4-2))+'%');
+        p.style.setProperty('--y', (y + (Math.random()*3-1))+'%');
+        p.style.setProperty('--s', size+'px');
+        p.style.setProperty('--dx', (drift + (Math.random()*10-5))+'vw');
+        p.style.setProperty('--dy', (-(28+Math.random()*30))+'vh');
+        p.style.setProperty('--r', (Math.random()*80-40)+'deg');
+        const d = 9 + Math.random()*5;
+        p.style.setProperty('--d', d+'s');
+        p.style.setProperty('--t', (-Math.random()*d)+'s');
+        box.appendChild(p);
+      }
+    });
+  })();
+
+  // Fumaça preta, intercalada com a vermelha
+  (function(){
+    const box = document.getElementById('smoke');
+    const small = window.innerWidth < 600;
+    const per = small ? 2 : 3;
+    const spots = [
+      [14,101,5],[38,104,-3],[62,104,3],[86,101,-5],
+      [6,56,7],[94,60,-7]
+    ];
+    (small ? spots.slice(0,4) : spots).forEach(([x,y,drift])=>{
+      for(let i=0;i<per;i++){
+        const p = document.createElement('i');
+        p.className = 'dark';
+        const size = (small?120:170) + Math.random()*(small?90:140);
+        p.style.setProperty('--x', (x + (Math.random()*4-2))+'%');
+        p.style.setProperty('--y', (y + (Math.random()*3-1))+'%');
+        p.style.setProperty('--s', size+'px');
+        p.style.setProperty('--dx', (drift + (Math.random()*10-5))+'vw');
+        p.style.setProperty('--dy', (-(26+Math.random()*30))+'vh');
+        p.style.setProperty('--r', (Math.random()*80-40)+'deg');
+        const d = 10 + Math.random()*5;
+        p.style.setProperty('--d', d+'s');
+        p.style.setProperty('--t', (-Math.random()*d)+'s');
+        box.appendChild(p);
+      }
     });
   })();
 
